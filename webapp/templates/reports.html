@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Incident Reports & Telemetry Audits{% endblock %}
+{% block bodyclass %}wide skeuo-body{% endblock %}
+{% block content %}
+<section class="head hardware-chassis">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div>
+    <div class="rack-label">REPORT GENERATION DECK // AVAILABILITY & MTTR AUDITS</div>
+    <h1 class="embossed-title">SYSTEM INCIDENT REPORTS</h1>
+    <p class="muted small" style="margin: 0;">GENERATE DETAILED AVAILABILITY, DETECTION ACCURACY, MTTD/MTTR COMPLIANCE, AND ACTIONABLE AUDIT LOGS.</p>
+  </div>
+</section>
+
+<!-- Generate Report Control Console -->
+<section class="panel rack-unit">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">GENERATE</span> AUDIT COMPLIANCE EXPORT</div>
+    <span class="status-lamp cyan"></span>
+  </div>
+  <p class="lead" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0;">
+    Comprehensive diagnostic reporting covering network uptime, anomaly detection latency, autonomous self-healing recovery duration, and policy executions.
+    {% if every %}<br><span style="color: var(--led-cyan); font-family: var(--font-mono); font-size: 0.8rem;">● AUTOMATIC SCHEDULER: Generating report every {{ every }} minutes.</span>{% endif %}
+  </p>
+  <form method="post" action="{{ url_for('generate_report') }}" style="margin-top: 14px;">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div class="row" style="gap: 16px;">
+      <label class="inline" style="font-family: var(--font-display); font-size: 0.8rem; color: #fff;">
+        AUDIT TIME WINDOW:
+        <select name="period" style="margin-left: 8px;">
+          {% for k, name in periods.items() %}<option value="{{ k }}">{{ name }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="tactile-btn lg" type="submit">
+        <span class="btn-cap">GENERATE AUDIT REPORT NOW ➔</span>
+      </button>
+    </div>
+  </form>
+</section>
+
+<!-- Archived Reports History Deck -->
+<section class="panel rack-unit">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">ARCHIVE</span> HISTORICAL EXPORT VAULT</div>
+  </div>
+  <h2>Historical Audit Archive</h2>
+  <div class="hardware-table-wrap">
+    <table class="hardware-table">
+      <thead><tr><th>GENERATED AT</th><th>TIME PERIOD COVERED</th><th>ACCESS DOCUMENT</th></tr></thead>
+      <tbody>
+      {% for r in reports %}
+        <tr>
+          <td><code class="hw-code">{{ r.when }}</code></td>
+          <td><strong>{{ r.covers }}</strong></td>
+          <td>
+            {% if r.html %}
+              <a href="{{ url_for('get_report', name=r.html) }}" target="_blank" rel="noopener" class="tactile-btn sm" style="text-decoration: none;">
+                VIEW HTML
+              </a>
+            {% endif %}
+            {% if r.pdf %}
+              <a href="{{ url_for('get_report', name=r.pdf) }}" class="tactile-btn sm" style="text-decoration: none; margin-left: 6px; border-color: rgba(0, 229, 255, 0.4); color: var(--led-cyan);">
+                DOWNLOAD PDF ⤓
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="empty-table-msg">No diagnostic reports compiled yet. Use the console above to generate an initial report.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

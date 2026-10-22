@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Network Inventory & Provisioning{% endblock %}
+{% block bodyclass %}wide skeuo-body{% endblock %}
+{% block content %}
+<section class="head hardware-chassis">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div>
+    <div class="rack-label">NETWORK PROVISIONING & DISCOVERY ENGINE</div>
+    <h1 class="embossed-title">MANAGED NETWORK DOMAINS</h1>
+    <p class="muted small" style="margin: 0;">REGISTER SUBNETS, CONFIGURE ENCRYPTED VAULT CREDENTIALS, AND ENUMERATE TOPOLOGY NODES.</p>
+  </div>
+</section>
+
+<div class="two">
+<!-- Add Network Form Rack Unit -->
+<section class="panel rack-unit">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">ADD</span> PROVISION NEW DOMAIN</div>
+  </div>
+  <h2>Provision Network</h2>
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label>DOMAIN NAME <input name="name" required maxlength="60" value="{{ form.get('name','') }}" placeholder="Campus Lab LAN"></label>
+    <label>TARGET IPV4 SUBNET <input name="subnet" required value="{{ form.get('subnet','') }}" placeholder="10.0.1.0/24"></label>
+    <label>STATIC NODE LIST (OPTIONAL) 
+      <textarea name="devices" rows="4" placeholder="10.0.1.1 r1&#10;10.0.2.100 web">{{ form.get('devices','') }}</textarea>
+      <small style="color: var(--text-dim);">One IP per line. Leave empty for automatic SDN subnet discovery.</small>
+    </label>
+    <label>DEVICE SSH OPERATOR <input name="ssh_user" required maxlength="40" value="{{ form.get('ssh_user','') }}" autocomplete="off" placeholder="admin"></label>
+    <label>DEVICE SSH SECRET / KEY <input name="ssh_password" type="password" required maxlength="200" autocomplete="new-password" placeholder="••••••••">
+      <small style="color: var(--text-dim);">Encrypted at rest with AES-256 Fernet key in local vault.</small>
+    </label>
+    <button class="tactile-btn lg" type="submit" style="margin-top: 8px;">
+      <span class="btn-cap">+ PROVISION DOMAIN</span>
+    </button>
+  </form>
+</section>
+
+<!-- Registered Networks List Rack Unit -->
+<section class="panel rack-unit">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">ACTIVE</span> REGISTERED TOPOLOGIES</div>
+  </div>
+  <h2>Active Domains & Nodes</h2>
+  {% for n, devs in rows %}
+  <article class="net hardware-well {% if n.active %}active{% endif %}" style="margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px; margin-bottom: 8px;">
+      <h3 style="margin: 0; font-family: var(--font-display); font-size: 1.1rem; color: #fff;">{{ n.name }}</h3>
+      <span class="chip" style="font-family: var(--font-mono); font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; background: {% if n.active %}rgba(0,229,255,0.15); color: var(--led-cyan); border: 1px solid rgba(0,229,255,0.3);{% else %}#1e293b; color: #94a3b8;{% endif %}">
+        ● {{ 'ACTIVELY MONITORED' if n.active else 'STANDBY DOMAIN' }}
+      </span>
+    </div>
+    <p class="muted small" style="margin: 0 0 10px; font-family: var(--font-mono);">
+      SUBNET: <code class="hw-code">{{ n.subnet }}</code> | VAULT ENCRYPTED | PROVISIONED: {{ n.created.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+    <div class="hardware-table-wrap scroll-deck" style="max-height: 180px; margin-bottom: 12px;">
+      <table class="hardware-table compact">
+        <thead><tr><th>IP ADDRESS</th><th>HOSTNAME</th><th>ROLE</th><th>LINK STATUS</th></tr></thead>
+        <tbody>
+        {% for d in devs %}
+          <tr>
+            <td><code class="hw-code">{{ d.ip }}</code></td>
+            <td><strong>{{ d.name }}</strong></td>
+            <td><span class="role-pill">{{ d.role }}</span></td>
+            <td><span style="color: {% if d.found %}var(--led-green){% else %}var(--led-amber){% endif %}; font-weight: 700;">● {{ 'Yes' if d.found else 'Not in the simulation' }}</span></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="empty-table-msg">No devices enumerated in subnet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="row">
+      {% if not n.active %}
+      <form method="post" action="{{ url_for('activate_network', nid=n.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="tactile-btn" type="submit">ACTIVATE FOR MONITORING</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('delete_network', nid=n.id) }}"
+            data-confirm="Remove {{ n.name }} and its stored credentials?">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="tactile-btn danger-btn" type="submit">DELETE</button>
+      </form>
+    </div>
+  </article>
+  {% else %}
+  <p class="empty-table-msg">No managed domains provisioned yet. Use the form on the left to add your first network.</p>
+  {% endfor %}
+</section>
+</div>
+{% endblock %}

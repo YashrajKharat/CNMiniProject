@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Terminal Access // Sign in{% endblock %}
+{% block bodyclass %}narrow skeuo-body{% endblock %}
+{% block content %}
+<section class="panel rack-unit">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">AUTH</span> OPERATOR ACCESS CONSOLE</div>
+    <span class="status-lamp cyan"></span>
+  </div>
+  <h1 class="embossed-title" style="font-size: 1.4rem; margin-bottom: 12px;">OPERATOR SIGN IN</h1>
+  <p class="muted small" style="margin-bottom: 20px;">AUTHENTICATE TO ACCESS SDN HARDWARE CONTROL DECK</p>
+  <form method="post" class="stack" id="login-form">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label>OPERATOR USERNAME <input name="username" id="login-user" required maxlength="40" autocomplete="username" autofocus value="{{ username_hint or 'Yashraj' }}" placeholder="admin"></label>
+    <label>SECURITY KEY / PASSWORD <input name="password" id="login-pw" type="password" required autocomplete="current-password" value="password123" placeholder="••••••••"></label>
+    <button class="tactile-btn lg" type="submit" style="margin-top: 10px;">
+      <span class="btn-cap"><span class="btn-dot cyan"></span> AUTHENTICATE & ENTER DECK ➔</span>
+    </button>
+  </form>
+</section>
+{% endblock %}

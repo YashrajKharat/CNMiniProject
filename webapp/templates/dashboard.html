@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+{% block title %}SDN Control Deck{% endblock %}
+{% block bodyclass %}wide skeuo-body{% endblock %}
+{% block content %}
+<!-- Master Hardware Header Deck -->
+<section class="head hardware-chassis">
+  <div class="chassis-screws">
+    <span class="screw tl"></span><span class="screw tr"></span>
+    <span class="screw bl"></span><span class="screw br"></span>
+  </div>
+  <div class="chassis-info">
+    <div class="rack-label">NETWORK UNIT // ACTIVE DOMAIN</div>
+    <h1 class="embossed-title">{{ net.name }}</h1>
+    <div class="chassis-meta">
+      <span class="meta-tag"><i class="tag-led"></i> SUBNET: <strong>{{ net.subnet }}</strong></span>
+      <span class="meta-separator">|</span>
+      <span class="meta-tag"><i class="tag-led"></i> DISCOVERED DEVICES: <strong>{{ devices|length }} NODES</strong></span>
+    </div>
+  </div>
+  <div class="state-chassis">
+    <div class="state hardware-meter" id="state" data-state="offline">
+      <span class="convex-led" id="state-led"></span>
+      <div class="meter-readout">
+        <span class="meter-label">SYSTEM STATE</span>
+        <span class="meter-val" id="state-text">Checking the monitor</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Emergency Interlock / Approval Request Panel -->
+<div id="approval" class="approval industrial-hazard" hidden>
+  <div class="hazard-stripes"></div>
+  <div class="approval-content">
+    <div class="approval-beacon">
+      <span class="pulsing-amber-beacon"></span>
+    </div>
+    <div class="approval-text">
+      <span class="hazard-badge">OPERATOR ACTION REQUIRED</span>
+      <strong class="approval-title">Autonomous Remediation Interlock Triggered</strong>
+      <p id="approval-what" class="approval-desc"></p>
+      <div class="countdown-deck">
+        <span class="timer-led">⏱</span> AUTO-DECLINE TIMER: <span id="approval-left" class="timer-digits">30s</span>
+      </div>
+    </div>
+    <div class="approval-actions">
+      <button class="tactile-btn lg approve-btn" id="approve">
+        <span class="btn-cap"><span class="btn-led"></span> AUTHORIZE & APPLY FIX</span>
+      </button>
+      <button class="tactile-btn lg decline-btn" id="decline">
+        <span class="btn-cap">DECLINE ACTION</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Unit 01: Live Network Topology Schematic & Sequence Timeline -->
+<section class="panel rack-unit live" aria-labelledby="live-title">
+  <div class="chassis-screws">
+    <span class="screw tl"></span><span class="screw tr"></span>
+    <span class="screw bl"></span><span class="screw br"></span>
+  </div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">UNIT 01</span> REAL-TIME NETWORK TOPOLOGY & ROUTING SCHEMATIC</div>
+    <div class="vent-grille"><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+  <div class="live-head">
+    <h2 id="live-title" class="engraved-label">Network Topology Display</h2>
+    <div class="caption-crt">
+      <span class="crt-indicator">DIAGNOSTIC:</span>
+      <p id="live-caption" class="caption" role="status">Waiting for the first measurement from the monitor.</p>
+    </div>
+  </div>
+  <div class="live-body">
+    <div class="crt-screen-frame">
+      <div class="glass-glare"></div>
+      <svg id="netview" viewBox="0 0 760 330" role="img" aria-label="Live view of the simulated network">
+        <defs>
+          <filter id="laser-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <linearGradient id="primary-cable-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#3b82f6" />
+            <stop offset="50%" stop-color="#60a5fa" />
+            <stop offset="100%" stop-color="#3b82f6" />
+          </linearGradient>
+          <linearGradient id="chassis-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2c3442" />
+            <stop offset="100%" stop-color="#181d26" />
+          </linearGradient>
+          <linearGradient id="router-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1e3a5f" />
+            <stop offset="100%" stop-color="#0f2038" />
+          </linearGradient>
+          <linearGradient id="host-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#242b38" />
+            <stop offset="100%" stop-color="#151a22" />
+          </linearGradient>
+          <linearGradient id="attacker-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#451a1a" />
+            <stop offset="100%" stop-color="#250d0d" />
+          </linearGradient>
+        </defs>
+
+        <!-- Physical Links -->
+        <g class="links">
+          <path class="lnk" d="M148 168H168"/>
+          <path class="lnk" d="M204 168H236"/>
+          <path class="lnk" id="link-primary" d="M300 168H460"/>
+          <path class="lnk" id="link-b1" d="M268 146V70H348"/>
+          <path class="lnk" id="link-b2" d="M412 70H492V146"/>
+          <path class="lnk" d="M524 168H556"/>
+          <path class="lnk" d="M592 168H612"/>
+        </g>
+
+        <!-- Laser Data Flows -->
+        <g class="flows" filter="url(#laser-glow)">
+          <path id="f-main-primary" class="flow ok off" d="M136 111L186 168H268H492H574L612 201"/>
+          <path id="f-main-backup" class="flow ok off" d="M136 111L186 168H268V70H492V168H574L612 201"/>
+          <path id="f-main-lost" class="flow lost off" d="M136 111L186 168H268"/>
+          <path id="f-attack-r1" class="flow attack off" d="M136 237L186 168H268"/>
+          <path id="f-attack-primary" class="flow attack off" d="M268 168H492H574L612 201"/>
+          <path id="f-attack-backup" class="flow attack off" d="M268 168V70H492V168H574L612 201"/>
+          <path id="f-heavy-primary" class="flow heavy off" d="M136 153L186 168H268H492H574L612 201"/>
+          <path id="f-heavy-backup" class="flow heavy off" d="M136 153L186 168H268V70H492V168H574L612 201"/>
+        </g>
+
+        <text id="x-primary" class="cross off" x="380" y="178" text-anchor="middle">&#10005;</text>
+        <text id="t-delay" class="lbl warn off" x="380" y="154" text-anchor="middle"></text>
+        <text class="lbl cable-tag" x="380" y="198" text-anchor="middle">PRIMARY LINK [10 MBIT/S FIBER]</text>
+        <text class="lbl cable-tag" x="380" y="40" text-anchor="middle">BACKUP HIGH-AVAILABILITY PATH VIA R3</text>
+
+        <!-- LAN 1 Rack Slot -->
+        <g class="lan">
+          <rect class="frame" x="16" y="62" width="132" height="206" rx="8" fill="url(#chassis-grad)"/>
+          <text class="lbl b lan-header" x="82" y="82" text-anchor="middle">LAN 1 // 10.0.1.0/24</text>
+          
+          <g class="topo-node" data-node="h1" data-ip="10.0.1.11" data-role="Probe Host (Telemetry Client)" data-gw="10.0.1.1 (r1)" data-subnet="10.0.1.0/24 (LAN 1)">
+            <rect class="host" x="28" y="94" width="108" height="34" rx="6" fill="url(#host-grad)"/>
+            <circle cx="38" cy="111" r="3.5" class="node-led green"/>
+            <text class="hn" x="84" y="116" text-anchor="middle">h1 (probe)</text>
+          </g>
+
+          <g class="topo-node" data-node="h2" data-ip="10.0.1.12" data-role="LAN 1 Host (Traffic Generator)" data-gw="10.0.1.1 (r1)" data-subnet="10.0.1.0/24 (LAN 1)">
+            <rect class="host" x="28" y="136" width="108" height="34" rx="6" fill="url(#host-grad)"/>
+            <circle cx="38" cy="153" r="3.5" class="node-led green"/>
+            <text class="hn" x="84" y="158" text-anchor="middle">h2</text>
+          </g>
+
+          <g class="topo-node" data-node="h3" data-ip="10.0.1.13" data-role="LAN 1 Host (Client Workstation)" data-gw="10.0.1.1 (r1)" data-subnet="10.0.1.0/24 (LAN 1)">
+            <rect class="host" x="28" y="178" width="108" height="34" rx="6" fill="url(#host-grad)"/>
+            <circle cx="38" cy="195" r="3.5" class="node-led green"/>
+            <text class="hn" x="84" y="200" text-anchor="middle">h3</text>
+          </g>
+
+          <g class="topo-node" data-node="h4" data-ip="10.0.1.14" data-role="Adversary Host (Attack Rig)" data-gw="10.0.1.1 (r1)" data-subnet="10.0.1.0/24 (LAN 1)">
+            <rect class="host attacker" id="n-h4" x="28" y="220" width="108" height="34" rx="6" fill="url(#attacker-grad)"/>
+            <circle cx="38" cy="237" r="3.5" class="node-led red"/>
+            <text class="hn" x="84" y="242" text-anchor="middle">h4 (attacker)</text>
+            <!-- Skeuomorphic Quarantined Badge Overlay -->
+            <g id="h4-quarantined-badge" class="quarantined-stamp off" transform="translate(30, 222)">
+              <rect width="104" height="30" rx="4" class="stamp-bg"/>
+              <text x="52" y="20" text-anchor="middle" class="stamp-txt">QUARANTINED</text>
+            </g>
+          </g>
+        </g>
+
+        <!-- LAN 2 Rack Slot -->
+        <g class="lan">
+          <rect class="frame" x="612" y="76" width="132" height="174" rx="8" fill="url(#chassis-grad)"/>
+          <text class="lbl b lan-header" x="678" y="96" text-anchor="middle">LAN 2 // 10.0.2.0/24</text>
+
+          <g class="topo-node" data-node="h5" data-ip="10.0.2.11" data-role="LAN 2 Host (Client Workstation)" data-gw="10.0.2.1 (r2)" data-subnet="10.0.2.0/24 (LAN 2)">
+            <rect class="host" x="624" y="108" width="108" height="34" rx="6" fill="url(#host-grad)"/>
+            <circle cx="634" cy="125" r="3.5" class="node-led green"/>
+            <text class="hn" x="680" y="130" text-anchor="middle">h5</text>
+          </g>
+
+          <g class="topo-node" data-node="h6" data-ip="10.0.2.12" data-role="LAN 2 Host (Client Workstation)" data-gw="10.0.2.1 (r2)" data-subnet="10.0.2.0/24 (LAN 2)">
+            <rect class="host" x="624" y="150" width="108" height="34" rx="6" fill="url(#host-grad)"/>
+            <circle cx="634" cy="167" r="3.5" class="node-led green"/>
+            <text class="hn" x="680" y="172" text-anchor="middle">h6</text>
+          </g>
+
+          <g class="topo-node" data-node="web" data-ip="web-server" data-role="Target Web Server (Apache HTTP Daemon)" data-gw="10.0.2.1 (r2)" data-subnet="10.0.2.0/24 (LAN 2)">
+            <rect class="host server" id="n-web" x="624" y="192" width="108" height="34" rx="6" fill="url(#router-grad)"/>
+            <circle cx="634" cy="209" r="3.5" class="node-led cyan pulse"/>
+            <text class="hn" x="680" y="214" text-anchor="middle">WEB SERVER</text>
+          </g>
+        </g>
+
+        <!-- Hardware Switches -->
+        <g class="topo-node" data-node="s1" data-ip="10.0.1.254" data-role="LAN 1 Layer-2 Switch" data-gw="10.0.1.1 (r1)" data-subnet="10.0.1.0/24">
+          <rect class="sw" x="168" y="150" width="36" height="36" rx="6" fill="url(#chassis-grad)"/>
+          <text class="hn sw-txt" x="186" y="173" text-anchor="middle">s1</text>
+        </g>
+
+        <g class="topo-node" data-node="s2" data-ip="10.0.2.254" data-role="LAN 2 Layer-2 Switch" data-gw="10.0.2.1 (r2)" data-subnet="10.0.2.0/24">
+          <rect class="sw" x="556" y="150" width="36" height="36" rx="6" fill="url(#chassis-grad)"/>
+          <text class="hn sw-txt" x="574" y="173" text-anchor="middle">s2</text>
+        </g>
+
+        <!-- Routers (r1, r2, r3) with Hardware Styling -->
+        <g id="n-r1-group" class="topo-node" data-node="r1" data-ip="10.0.1.1" data-role="Gateway Router 1 (LAN 1 / Primary Link)" data-gw="10.0.12.2 (r2)" data-subnet="10.0.1.0/24 & 10.0.12.0/30">
+          <rect class="rt" id="n-r1" x="236" y="146" width="64" height="44" rx="8" fill="url(#router-grad)"/>
+          <circle cx="246" cy="156" r="3" class="node-led cyan blink"/>
+          <circle cx="254" cy="156" r="3" class="node-led green"/>
+          <text class="rn" x="268" y="175" text-anchor="middle">R1</text>
+        </g>
+
+        <g id="n-r2-group" class="topo-node" data-node="r2" data-ip="10.0.2.1" data-role="Gateway Router 2 (LAN 2 / Target Gateway)" data-gw="10.0.12.1 (r1)" data-subnet="10.0.2.0/24 & 10.0.12.0/30">
+          <rect class="rt" id="n-r2" x="460" y="146" width="64" height="44" rx="8" fill="url(#router-grad)"/>
+          <circle cx="470" cy="156" r="3" class="node-led cyan blink"/>
+          <circle cx="478" cy="156" r="3" class="node-led green"/>
+          <text class="rn" x="492" y="175" text-anchor="middle">R2</text>
+        </g>
+
+        <g id="n-r3-group" class="topo-node" data-node="r3" data-ip="10.0.13.2" data-role="Backup High-Availability Router (R1-R3-R2)" data-gw="10.0.23.2 (r2)" data-subnet="10.0.13.0/30 & 10.0.23.0/30">
+          <rect class="rt" id="n-r3" x="348" y="48" width="64" height="44" rx="8" fill="url(#router-grad)"/>
+          <circle cx="358" cy="58" r="3" class="node-led cyan blink"/>
+          <circle cx="366" cy="58" r="3" class="node-led green"/>
+          <text class="rn" x="380" y="77" text-anchor="middle">R3</text>
+        </g>
+
+        <text id="t-r1path" class="lbl router-route-txt" x="268" y="208" text-anchor="middle"></text>
+        <text id="t-r2path" class="lbl router-route-txt" x="492" y="208" text-anchor="middle"></text>
+
+        <!-- Badges -->
+        <g id="b-r1" class="badge off"><rect x="196" y="216" width="144" height="26" rx="6"/><text id="t-b-r1" x="268" y="233" text-anchor="middle"></text></g>
+        <g id="b-r2" class="badge off"><rect x="420" y="216" width="144" height="26" rx="6"/><text id="t-b-r2" x="492" y="233" text-anchor="middle"></text></g>
+
+        <!-- Legend Ribbon -->
+        <g class="key" transform="translate(16 294)">
+          <path class="flow ok" d="M0 8H34"/><text class="lbl" x="42" y="12">Normal Traffic</text>
+          <path class="flow attack" d="M150 8H184"/><text class="lbl" x="192" y="12">Attack Traffic</text>
+          <path class="flow heavy" d="M300 8H334"/><text class="lbl" x="342" y="12">Congestion Flow</text>
+          <path class="flow lost" d="M450 8H484"/><text class="lbl" x="492" y="12">Dropped Packets</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- What is Happening Sequencer Deck -->
+    <div class="story hardware-well">
+      <div class="well-header">
+        <span class="well-icon">▶</span>
+        <h3>FLIGHT RECORDER // INCIDENT TIMELINE</h3>
+      </div>
+      <ol id="steps" class="steps">
+        <li class="muted">No fault active. Trigger a test fault below.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Interactive Device Diagnostic & Inspection Bay -->
+  <div id="device-inspector" class="device-inspector-bay" hidden>
+    <div class="inspector-chassis">
+      <div class="inspector-header">
+        <div class="insp-title-wrap">
+          <span class="insp-badge">HARDWARE TELEMETRY DECK</span>
+          <h3 id="insp-title" class="engraved-label">DEVICE: H4 (10.0.1.14)</h3>
+        </div>
+        <button type="button" class="tactile-btn sm" id="insp-close-btn" title="Close Inspection Bay">
+          <span class="btn-cap">✕ CLOSE</span>
+        </button>
+      </div>
+      <div class="inspector-body">
+        <div class="inspector-vfd-grid">
+          <div class="vfd-slot"><dt>INTERFACE & IP</dt><dd id="insp-ip" class="vfd-txt cyan">10.0.1.14 / eth0</dd></div>
+          <div class="vfd-slot"><dt>GATEWAY ROUTER</dt><dd id="insp-gw" class="vfd-txt white">10.0.1.1 (r1)</dd></div>
+          <div class="vfd-slot"><dt>DOMAIN / SUBNET</dt><dd id="insp-subnet" class="vfd-txt amber">10.0.1.0/24 (LAN 1)</dd></div>
+          <div class="vfd-slot"><dt>HARDWARE MAC</dt><dd id="insp-mac" class="vfd-txt purple">00:00:0a:00:01:0e</dd></div>
+          <div class="vfd-slot"><dt>SYSTEM ROLE</dt><dd id="insp-role" class="vfd-txt blue">Adversary Host</dd></div>
+          <div class="vfd-slot"><dt>SECURITY POLICY</dt><dd id="insp-firewall" class="vfd-txt green">UNRESTRICTED</dd></div>
+        </div>
+        <div class="inspector-actions-bar">
+          <div class="insp-action-btns">
+            <button type="button" class="tactile-btn sm" id="insp-ping-btn">
+              <span class="btn-cap"><span class="btn-dot cyan"></span> 📡 RUN ICMP PING TEST</span>
+            </button>
+            <button type="button" class="tactile-btn sm danger-btn" id="insp-quarantine-btn">
+              <span class="btn-cap"><span class="btn-dot red"></span> 🚫 QUARANTINE HOST</span>
+            </button>
+            <button type="button" class="tactile-btn sm" id="insp-release-btn">
+              <span class="btn-cap"><span class="btn-dot green"></span> ✅ LIFT RESTRICTIONS</span>
+            </button>
+          </div>
+          <div class="insp-crt-monitor">
+            <span class="crt-tag">KERNEL TERMINAL ECHO:</span>
+            <div id="insp-terminal-output" class="insp-terminal-txt">Click a device node in the topology above to inspect interface telemetry and firewall rules.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Unit 02: Real Router State & Executed Command Terminal Deck -->
+<section class="grid">
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 02A</span> HARDWARE ROUTER STATUS QUERY</div>
+      <span class="status-lamp green"></span>
+    </div>
+    <h2>Real Router Kernel State</h2>
+    <p class="muted small">Queried directly from Linux router kernel tables (<code class="hw-code">ip route</code>, <code class="hw-code">iptables</code>, <code class="hw-code">tc</code>) after every measurement and state transition.</p>
+    <div class="crt-terminal-box">
+      <dl class="rstate" id="rstate"><div><dt>Connecting to router bus...</dt><dd></dd></div></dl>
+    </div>
+  </div>
+
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 02B</span> SYSTEM COMMAND AUDIT BUS</div>
+      <span class="status-lamp cyan"></span>
+    </div>
+    <h2>Commands Executed on Hardware</h2>
+    <p class="muted small">Live execution trace of all routing, firewall, and policy modifications.
+      <label class="inline hw-checkbox"><input type="checkbox" id="show-checks"> <span class="chk-custom"></span> Include read-only probe queries</label>
+    </p>
+    <div class="crt-terminal-box">
+      <ul class="cmds" id="cmds"><li class="muted">Awaiting commands...</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- Pulse Meter Strip -->
+<section class="pulse rack-unit" aria-label="Sample Timeline History">
+  <div class="rack-header mini">
+    <span class="unit-id sm">SDR PULSE TELEMETRY // LAST 90 SAMPLES</span>
+    <span class="pulse-legend-txt">REAL-TIME TIME-SERIES TICKS (NEWEST ON RIGHT)</span>
+  </div>
+  <div class="pulse-chassis">
+    <div class="pulse-bar" id="pulse" role="img" aria-label="One tick per sample"></div>
+  </div>
+  <div class="legend muted hardware-legend">
+    <span class="leg-item"><span class="k ok"></span> NORMAL</span>
+    <span class="leg-item"><span class="k flag"></span> ANOMALY FLAGGED</span>
+    <span class="leg-item"><span class="k fault"></span> INJECTED FAULT</span>
+  </div>
+</section>
+
+<!-- Unit 03: Telemetry VFD Instruments & Fault Injection Deck -->
+<section class="grid">
+  <!-- Real-Time Metrics Deck (Digital VFD Meters) -->
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 03A</span> LIVE TELEMETRY VFD MULTI-METER</div>
+      <div class="vent-grille sm"><span></span><span></span><span></span></div>
+    </div>
+    <h2>Telemetry Instruments</h2>
+    <dl class="now vfd-grid">
+      <div class="vfd-slot"><dt>AI DETECTION STATE</dt><dd id="v-label" class="vfd-txt green">-</dd></div>
+      <div class="vfd-slot"><dt>ROUND-TRIP LATENCY</dt><dd id="v-latency" class="vfd-txt cyan">-</dd></div>
+      <div class="vfd-slot"><dt>PACKET LOSS RATIO</dt><dd id="v-loss" class="vfd-txt red">-</dd></div>
+      <div class="vfd-slot"><dt>INBOUND THROUGHPUT</dt><dd id="v-thr" class="vfd-txt amber">-</dd></div>
+      <div class="vfd-slot"><dt>PACKET RATE (PPS)</dt><dd id="v-pps" class="vfd-txt blue">-</dd></div>
+      <div class="vfd-slot"><dt>TCP SYN RATIO</dt><dd id="v-syn" class="vfd-txt purple">-</dd></div>
+      <div class="vfd-slot"><dt>ACTIVE TRANSIT PATH</dt><dd id="v-path" class="vfd-txt white">-</dd></div>
+      <div class="vfd-slot"><dt>QUARANTINED SOURCES</dt><dd id="v-blocked" class="vfd-txt orange">None</dd></div>
+    </dl>
+  </div>
+
+  <!-- Fault Injection & Healing Control Console -->
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 03B</span> AUTONOMOUS CONTROLLER & FAULT RIG</div>
+      <div class="vent-grille sm"><span></span><span></span><span></span></div>
+    </div>
+    <h2>Autonomous Operating Mode</h2>
+    
+    <!-- 3-Way Heavy Tactile Rocker Switch Bar -->
+    <div class="seg tactile-rocker-bar" role="radiogroup" aria-label="Healing mode" id="modes">
+      {% set names = {'monitor': 'Watch only', 'approval': 'Ask me first', 'auto': 'Fix automatically'} %}
+      {% for m in modes %}
+      <button type="button" class="rocker-key" role="radio" aria-checked="false" data-mode="{{ m }}">
+        <span class="rocker-cap">{{ names[m] }}</span>
+        <span class="rocker-led"></span>
+      </button>
+      {% endfor %}
+    </div>
+
+    <p class="muted small mode-desc-box" id="mode-help"></p>
+
+    <!-- Industrial Fault Pushbutton Console -->
+    <h3 class="engraved-label">Fault Injection Console</h3>
+    <p class="muted small">Triggers real cyberattacks and physical network failures on simulated nodes.</p>
+
+    <!-- Skeuomorphic Fault Calibrator Sub-Panel -->
+    <div class="fault-calibrator-deck">
+      <div class="calibrator-knobs">
+        <div class="knob-group">
+          <label class="knob-label">ATTACK INTENSITY</label>
+          <div class="stepped-selector" id="fault-intensity" role="radiogroup">
+            <button type="button" class="step-btn" data-intensity="low">LOW</button>
+            <button type="button" class="step-btn active" data-intensity="med">MED</button>
+            <button type="button" class="step-btn" data-intensity="high">MAX</button>
+          </div>
+        </div>
+        <div class="knob-group">
+          <label class="knob-label">AUTO-STOP TIMER</label>
+          <div class="stepped-selector" id="fault-duration" role="radiogroup">
+            <button type="button" class="step-btn" data-duration="15">15S</button>
+            <button type="button" class="step-btn active" data-duration="30">30S</button>
+            <button type="button" class="step-btn" data-duration="cont">CONT</button>
+          </div>
+        </div>
+      </div>
+      <div class="fault-active-meter">
+        <span class="active-meter-lamp" id="fault-tally-led"></span>
+        <div class="meter-readout">
+          <span class="meter-label">FAULT STATUS</span>
+          <span class="meter-val" id="fault-tally-text">IDLE / STANDBY</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row wrap fault-console-deck" id="faults">
+      {% set fnames = {'link_failure': 'Link failure', 'syn_flood': 'SYN flood', 'port_scan': 'Port scan', 'latency_spike': 'Latency spike', 'congestion': 'Congestion'} %}
+      {% set fcolors = {'link_failure': 'amber', 'syn_flood': 'red', 'port_scan': 'purple', 'latency_spike': 'blue', 'congestion': 'gold'} %}
+      {% for f in faults %}
+      <button type="button" class="tactile-btn fault-btn" data-fault="{{ f }}">
+        <span class="btn-cap"><span class="btn-dot {{ fcolors[f] }}"></span> {{ fnames[f] }}</span>
+      </button>
+      {% endfor %}
+      <button type="button" class="tactile-btn emergency-stop-btn" id="stop-fault">
+        <span class="btn-cap">🛑 End fault</span>
+      </button>
+    </div>
+    <p class="muted fault-status-message" id="fault-msg" role="status"></p>
+
+  </div>
+</section>
+
+<!-- Unit 04: Digital Oscilloscope Charts (Latency & PPS) -->
+<section class="grid">
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 04A</span> OSCILLOSCOPE // PROBE LATENCY (MS)</div>
+      <span class="scope-trace-tag cyan">CH 1: 5-PT PROBE RTT</span>
+    </div>
+    <div class="chart crt-scope-frame"><canvas id="c-latency"></canvas></div>
+  </div>
+
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 04B</span> OSCILLOSCOPE // TRAFFIC DENSITY (PPS)</div>
+      <span class="scope-trace-tag amber">CH 2: INBOUND PPS SPECTRUM</span>
+    </div>
+    <div class="chart crt-scope-frame"><canvas id="c-pps"></canvas></div>
+  </div>
+</section>
+
+<!-- Unit 05: Historical Incident Register -->
+<section class="panel rack-unit">
+  <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+  <div class="rack-header">
+    <div class="unit-id"><span class="unit-badge">UNIT 05</span> AUTONOMOUS INCIDENT LOG & REMEDIATION REGISTER</div>
+  </div>
+  <h2>Resolved Incidents History</h2>
+  <div class="hardware-table-wrap">
+    <table class="hardware-table">
+      <thead>
+        <tr>
+          <th>TIMESTAMP</th>
+          <th>PROBLEM CLASSIFICATION</th>
+          <th>AUTONOMOUS ACTION</th>
+          <th>RESOLUTION</th>
+          <th>MTTD (DETECT)</th>
+          <th>MTTR (RECOVER)</th>
+        </tr>
+      </thead>
+      <tbody id="incidents">
+        <tr><td colspan="6" class="empty-table-msg">No security or link incidents recorded yet.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Unit 06: Security Audit Ledger & Device Inventory Deck -->
+<section class="grid">
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 06A</span> SECURITY AUDIT TRAIL</div>
+    </div>
+    <h2>Immutable Action Log</h2>
+    <div class="hardware-table-wrap scroll-deck">
+      <table class="hardware-table compact">
+        <thead><tr><th>TIME</th><th>EVENT</th><th>SYSTEM DETAIL</th></tr></thead>
+        <tbody id="audit"><tr><td colspan="3" class="empty-table-msg">Audit ledger standby...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel rack-unit">
+    <div class="chassis-screws"><span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span></div>
+    <div class="rack-header">
+      <div class="unit-id"><span class="unit-badge">UNIT 06B</span> TOPOLOGY ASSET INVENTORY</div>
+    </div>
+    <h2>Active Network Devices</h2>
+    <div class="hardware-table-wrap scroll-deck">
+      <table class="hardware-table compact">
+        <thead><tr><th>IP ADDRESS</th><th>HOSTNAME</th><th>SYSTEM ROLE</th></tr></thead>
+        <tbody>
+          {% for d in devices %}
+          <tr>
+            <td><code class="hw-code">{{ d.ip }}</code></td>
+            <td><strong>{{ d.name }}</strong></td>
+            <td><span class="role-pill">{{ d.role }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="empty-table-msg">No active devices registered.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='chart.umd.js') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{
+ "rows": 540,
+ "rounds": 6,
+ "train_rows": 360,
+ "test_rows": 180,
+ "isolation_forest": {
+  "target_fpr": 0.02,
+  "by_class": {
+   "normal": 0.08333333333333333,
+   "syn_flood": 1.0,
+   "port_scan": 0.9166666666666666,
+   "link_failure": 1.0,
+   "congestion": 1.0
+  },
+  "false_positive_rate": 0.08333333333333333,
+  "attack_detection_rate": 0.9791666666666666
+ },
+ "threshold_rule": {
+  "by_class": {
+   "normal": 0.0,
+   "syn_flood": 0.0,
+   "port_scan": 0.0,
+   "link_failure": 1.0,
+   "congestion": 0.9722222222222222
+  },
+  "false_positive_rate": 0.0,
+  "attack_detection_rate": 0.4930555555555556
+ },
+ "random_forest": {
+  "test_accuracy": 1.0,
+  "report": {
+   "normal": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 36.0
+   },
+   "syn_flood": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 36.0
+   },
+   "port_scan": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 36.0
+   },
+   "link_failure": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 36.0
+   },
+   "congestion": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 36.0
+   },
+   "accuracy": 1.0,
+   "macro avg": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 180.0
+   },
+   "weighted avg": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1-score": 1.0,
+    "support": 180.0
+   }
+  },
+  "cv_accuracy_mean": 1.0,
+  "cv_accuracy_per_round": [
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0
+  ],
+  "feature_importance": {
+   "throughput_mbps": 0.2158,
+   "latency_ms": 0.1833,
+   "pps": 0.165,
+   "syn_ratio": 0.1624,
+   "unique_ports_max": 0.1539,
+   "loss_pct": 0.1189,
+   "arp_rate": 0.0007
+  }
+ },
+ "two_stage_accuracy": 0.9666666666666667
+}

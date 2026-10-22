@@ -1,0 +1,42 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Secrets, keys, and security tokens
+data/secret.key
+data/flask_secret
+data/*.key
+
+# Database and runtime state
+data/*.db
+data/status.json
+data/metrics.jsonl
+data/commands.jsonl
+data/control.json
+data/approval*.json
+data/settings.json
+data/audit.jsonl
+data/reports/*
+data/*.tmp
+data/test*.csv
+instance/
+
+# Duplicate unzipped subfolder
+autonomous-network-engineer/
+
+# IDE and OS artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
